@@ -131,10 +131,12 @@ class Prey
   end
 end
 
-30.times{Prey.new}
-8.times{Predator.new}
-stat = [[30,8]]
-10.times do |t|
+start_preys = 150
+start_predators = 14
+start_preys.times{Prey.new}
+start_predators.times{Predator.new}
+stat = [[start_preys,start_predators]]
+31.times do |t|
   break if World.preys.length.zero? || World.predators.length.zero?
   World.tics_in_day.times{
     World.preys.each{_1.run}
