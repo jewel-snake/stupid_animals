@@ -130,14 +130,21 @@ class Prey
     @y = rand World.y_boarder
   end
 end
+def count(a,b)
+  ans = [0]*b
+  a.each{ans[_1]+=1}
+  ans
+end
 
 start_preys = 150
 start_predators = 14
 start_preys.times{Prey.new}
 start_predators.times{Predator.new}
 stat = [[start_preys,start_predators]]
+genofond = []
 31.times do |t|
   break if World.preys.length.zero? || World.predators.length.zero?
+  genofond.push [World.preys.map{[_1.mass,_1.velocity]},World.predators.map{[_1.mass,_1.velocity]}]
   World.tics_in_day.times{
     World.preys.each{_1.run}
     World.predators.each{_1.find_prey if _1.starve > 0}
