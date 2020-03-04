@@ -155,8 +155,3 @@ y_pred = stat.map{_1[1]}
 plot = UnicodePlot.lineplot(x,y_prey,name: "preys",width: 40, height: 10)
 UnicodePlot.lineplot!(plot,x,y_pred,name:"predators")
 plot.render
-=begin
-stat.each do |e|
-  puts "#{e.first} #{e.last}"
-end
-=end
