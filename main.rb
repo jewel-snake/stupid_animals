@@ -34,7 +34,7 @@ class World
   end
   @x_boarder = 500
   @y_boarder = 400
-  @tics_in_day = 1000
+  @tics_in_day = 600
   @predators = Set[]
   @preys = Set[]
   @velocity_pred = (2..4)
@@ -53,8 +53,8 @@ class Predator
   attr_accessor :starve
   def initialize(*args)
     if args.length.zero?
-      @speed = World.velocity_pred.first
-      @mass = World.mass_pred.first
+      @speed = rand World.velocity_pred
+      @mass = rand World.mass_pred
     else
       @speed = args[0]
       @mass = args[1]
@@ -96,8 +96,8 @@ class Prey
   attr_reader :mass, :speed, :x, :y
   def initialize(*args)
     if args.length.zero?
-      @speed = World.velocity_prey.first
-      @mass = World.mass_prey.first
+      @speed = rand World.velocity_prey
+      @mass = rand World.mass_prey
     else
       @speed = args[0]
       @mass = args[1]
@@ -136,23 +136,45 @@ def count(a,b)
   ans
 end
 
-start_preys = 150
-start_predators = 14
+start_preys = 100
+start_predators = 10
 start_preys.times{Prey.new}
 start_predators.times{Predator.new}
 stat = [[start_preys,start_predators]]
 genofond = []
-31.times do |t|
+k = Thread.new{}
+5.times do |t|
   break if World.preys.length.zero? || World.predators.length.zero?
-  genofond.push [World.preys.map{[_1.mass,_1.velocity]},World.predators.map{[_1.mass,_1.velocity]}]
+  genofond = [World.preys.map{[_1.mass,_1.speed]},World.predators.map{[_1.mass,_1.speed]}]
   World.tics_in_day.times{
     World.preys.each{_1.run}
     World.predators.each{_1.find_prey if _1.starve > 0}
     break if World.preys.length.zero? 
   }
   World.check
-  printf "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\bended in #{t+1} days"
+  k.join if k.status
+  printf "passed #{t+1} days\n"
   stat.push([World.preys.length,World.predators.length])
+  k = Thread.new(genofond) do |gen|
+    a1 = gen.first.map{_1.first}
+    a2 = gen.last.map{_1.first}
+    x1 = [0]*5
+    x2 = [0]*5
+    y = (1..5).to_a
+    y.each{|ind| x1[ind-1] = a1.count(ind)/a1.size.to_f;x2[ind-1] = a2.count(ind)/a2.size.to_f}
+    dayplot = UnicodePlot.lineplot(y,x1,name: "preys' mass")
+    UnicodePlot.lineplot!(dayplot,y,x2,name: "predators' mass")
+    dayplot.render
+    a1 = gen.first.map{_1.last}
+    a2 = gen.last.map{_1.last}
+    x1 = [0]*6
+    x2 = [0]*6
+    y = (1..6).to_a
+    y.each{|ind| x1[ind-1] = a1.count(ind)/a1.size.to_f;x2[ind-1] = a2.count(ind)/a2.size.to_f}
+    dayplot = UnicodePlot.lineplot(y,x1,name: "preys' velocity")
+    UnicodePlot.lineplot!(dayplot,y,x2,name: "predators' velocity")
+    dayplot.render
+  end
   World.new_day
 end
 puts
