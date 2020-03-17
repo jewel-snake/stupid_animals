@@ -156,6 +156,7 @@ k = Thread.new{}
   printf "passed #{t+1} days\n"
   stat.push([World.preys.length,World.predators.length])
   k = Thread.new(genofond) do |gen|
+=begin
     a1 = gen.first.map{_1.first}
     a2 = gen.last.map{_1.first}
     x1 = [0]*5
@@ -174,9 +175,20 @@ k = Thread.new{}
     dayplot = UnicodePlot.lineplot(y,x1,name: "preys' velocity")
     UnicodePlot.lineplot!(dayplot,y,x2,name: "predators' velocity")
     dayplot.render
+
+    gen[0] = gen.first.transpose
+    gen[1] = gen.last.transpose
+    UnicodePlot.densityplot(gen.first.first,gen.first.last,title:"preys' dencity").render
+    UnicodePlot.densityplot(gen.last.first,gen.last.last,title:"predators' dencity").render
+=end
+    gen[0] = gen[0].transpose
+    gen[1] = gen[1].transpose
+    UnicodePlot.boxplot(data: {preys: gen.first.first,preds: gen.last.first},title: 'mass').render
+    UnicodePlot.boxplot(data: {preys: gen.first.last, preds: gen.last.last}, title: 'velocity').render
   end
   World.new_day
 end
+k.join if k.status
 puts
 x = 0.step(stat.length-1)
 y_prey = stat.map{_1[0]}
