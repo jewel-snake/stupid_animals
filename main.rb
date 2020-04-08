@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-#require 'ruby2d'
+# require 'ruby2d'
 require 'set'
 require 'unicode_plot'
 
@@ -11,22 +11,21 @@ class World
       :tics_in_day,
       :predators,
       :preys,
+      :food,
       :velocity_pred,
       :velocity_prey,
       :mass_pred,
       :mass_prey)
   end
   def self.check
-    @predators.select{_1.starve > 0}.each{@predators.delete(_1)}
+    @predators.select{_1.starve.positive?}.each{@predators.delete(_1)}
+  end
+  def self.generate_food(num)
+    num.times{ @food.add([rand(World.x_boarder),rand(World.y_boarder)])}
   end
   def self.new_day
-    @predators.each do |p|
-      p.reset
-      p.starve = p.mass
-    end
-    @preys.each do |p|
-      p.reset
-    end
+    @predators.each{_1.reset}
+    @preys.each{_1.reset}
     prey_inc = (@preys.length*1.75).to_i
     pred_inc = (@predators.length*1.1).to_i
     prey_inc.times{Prey.new}
@@ -37,6 +36,7 @@ class World
   @tics_in_day = 600
   @predators = Set[]
   @preys = Set[]
+  @food = Set[]
   @velocity_pred = (2..4)
   @velocity_prey = (1..6)
   @mass_pred = (3..5)
@@ -59,14 +59,18 @@ class Predator
       @speed = args[0]
       @mass = args[1]
     end
-    @x = rand(World.x_boarder)
-    @y = rand(World.y_boarder)
+    self.reset
     @starve = @mass
     World.predators.add(self)
   end
   def reset
-    @x = rand World.x_boarder
-    @y = rand World.y_boarder
+    if rand() > 0.5
+      @x = rand World.x_boarder
+      @y = 0
+    else
+      @y = rand World.y_boarder
+      @x = 0
+    end
   end
   def find_prey
     unless World.preys.length.zero?
@@ -93,7 +97,7 @@ class Predator
 end
 
 class Prey
-  attr_reader :mass, :speed, :x, :y
+  attr_reader :mass, :speed, :x, :y, :starve
   def initialize(*args)
     if args.length.zero?
       @speed = rand World.velocity_prey
@@ -102,8 +106,8 @@ class Prey
       @speed = args[0]
       @mass = args[1]
     end
-    @x = rand(World.x_boarder)
-    @y = rand(World.y_boarder)
+    self.reset
+    @starve = @mass
     World.preys.add(self)
   end
   def step_from(p)
@@ -126,8 +130,13 @@ class Prey
     @speed.times{step_from(k)}
   end
   def reset
-    @x = rand World.x_boarder
-    @y = rand World.y_boarder
+    if rand() > 0.5
+      @x = rand World.x_boarder
+      @y = World.y_boarder
+    else
+      @y = rand World.y_boarder
+      @x = World.x_boarder
+    end
   end
 end
 def count(a,b)
@@ -136,8 +145,10 @@ def count(a,b)
   ans
 end
 
-start_preys = 100
+start_preys = 50
 start_predators = 10
+start_food = 100
+World.generate_food start_food
 start_preys.times{Prey.new}
 start_predators.times{Predator.new}
 stat = [[start_preys,start_predators]]
@@ -146,11 +157,11 @@ k = Thread.new{}
 5.times do |t|
   break if World.preys.length.zero? || World.predators.length.zero?
   genofond = [World.preys.map{[_1.mass,_1.speed]},World.predators.map{[_1.mass,_1.speed]}]
-  World.tics_in_day.times{
+  World.tics_in_day.times do
     World.preys.each{_1.run}
     World.predators.each{_1.find_prey if _1.starve > 0}
     break if World.preys.length.zero? 
-  }
+  end
   World.check
   k.join if k.status
   printf "passed #{t+1} days\n"
