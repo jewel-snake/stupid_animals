@@ -3,6 +3,7 @@
 # require 'ruby2d'
 require 'set'
 require 'unicode_plot'
+# TODO: move to real graphics statistic tool
 
 class World
   class << self
@@ -18,7 +19,7 @@ class World
       :k)
   end
   def self.check
-    @predators.reject{_1.starve.positive?}.each{@predators.delete(_1)}
+    @predators.reject{_1.alive}.each{@predators.delete(_1)}
   end
   def self.new_day
     @predators.each{_1.reset}
@@ -47,11 +48,12 @@ def eat(h,p)
 end
 
 class Predator
-  attr_reader :mass, :speed, :x, :y
+  attr_reader :mass, :speed, :x, :y, :alive
   attr_accessor :starve
   class << self
     attr_reader :alert_radius
   end
+  @alert_radius = 350
   def initialize(*args)
     if args.length.zero?
       @speed = rand World.velocity_pred
@@ -62,6 +64,7 @@ class Predator
     end
     self.reset
     @starve = @mass.to_f
+    @alive = true
     World.predators.add(self)
   end
   def reset
@@ -75,9 +78,11 @@ class Predator
   end
   def find_prey
     unless World.preys.length.zero?
-      k = World.preys.min_by{|a| (a.x-@x)*(a.x-@x)+(a.y-@y)*(a.y-@y)}
+      k = World.preys.select{find_prey(self,_1) < @alert_radius}.min_by{|a| find_dist(self,a)}
+      break if k.nil?
       @speed.times{step_to(k)}
     end
+    @alive = false unless @starve.positive?
   end
   def step_to(p)
     break unless p.alive
@@ -86,6 +91,7 @@ class Predator
     else
       if p.y > @y then @y += 1 else @y -= 1 end
     end
+    @starve -= World.k
     eat(self,p) if @x == p.x && @y == p.y
   end
 end
@@ -96,6 +102,7 @@ class Prey
   class << self
     attr_reader :alert_radius
   end
+  @alert_radius = 100
   def initialize(*args)
     if args.length.zero?
       @speed = rand World.velocity_prey
@@ -116,18 +123,21 @@ class Prey
     end
   end
   def run
-    k = World.predators.min_by{|a| (a.x-@x)*(a.x-@x)+(a.y-@y)*(a.y-@y)}
+    k = World.predators.select{find_dist(self,_1) < @alert_radius}.min_by{|a| find_dist(self,a)}
+    break if k.nil?
     @speed.times{step_from(k)}
   end
   def reset
     @y = rand World.y_boarder
     @x = rand World.x_boarder
   end
+  def look_for_hunter
+    World.predators.select{_1}
+  end
 end
-def count(a,b)
-  ans = [0]*b
-  a.each{ans[_1]+=1}
-  ans
+
+def find_dist(a,b)
+  (a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)
 end
 
 start_preys = 50
@@ -141,40 +151,15 @@ k = Thread.new{}
   break if World.preys.length.zero? || World.predators.length.zero?
   genofond = [World.preys.map{[_1.mass,_1.speed]},World.predators.map{[_1.mass,_1.speed]}]
   World.tics_in_day.times do
-    World.preys.each{_1.run}
-    World.predators.each{_1.find_prey if _1.starve > 0}
     break if World.preys.length.zero? 
+    # TODO: new eterate scheme
+    #
   end
   World.check
   k.join if k.status
   printf "passed #{t+1} days\n"
   stat.push([World.preys.length,World.predators.length])
   k = Thread.new(genofond) do |gen|
-=begin
-    a1 = gen.first.map{_1.first}
-    a2 = gen.last.map{_1.first}
-    x1 = [0]*5
-    x2 = [0]*5
-    y = (1..5).to_a
-    y.each{|ind| x1[ind-1] = a1.count(ind)/a1.size.to_f;x2[ind-1] = a2.count(ind)/a2.size.to_f}
-    dayplot = UnicodePlot.lineplot(y,x1,name: "preys' mass")
-    UnicodePlot.lineplot!(dayplot,y,x2,name: "predators' mass")
-    dayplot.render
-    a1 = gen.first.map{_1.last}
-    a2 = gen.last.map{_1.last}
-    x1 = [0]*6
-    x2 = [0]*6
-    y = (1..6).to_a
-    y.each{|ind| x1[ind-1] = a1.count(ind)/a1.size.to_f;x2[ind-1] = a2.count(ind)/a2.size.to_f}
-    dayplot = UnicodePlot.lineplot(y,x1,name: "preys' velocity")
-    UnicodePlot.lineplot!(dayplot,y,x2,name: "predators' velocity")
-    dayplot.render
-
-    gen[0] = gen.first.transpose
-    gen[1] = gen.last.transpose
-    UnicodePlot.densityplot(gen.first.first,gen.first.last,title:"preys' dencity").render
-    UnicodePlot.densityplot(gen.last.first,gen.last.last,title:"predators' dencity").render
-=end
     gen[0] = gen[0].transpose
     gen[1] = gen[1].transpose
     UnicodePlot.boxplot(data: {preys: gen.first.first,preds: gen.last.first},title: 'mass').render
