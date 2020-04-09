@@ -11,7 +11,6 @@ class World
       :tics_in_day,
       :predators,
       :preys,
-      :food,
       :velocity_pred,
       :velocity_prey,
       :mass_pred,
@@ -19,9 +18,6 @@ class World
   end
   def self.check
     @predators.select{_1.starve.positive?}.each{@predators.delete(_1)}
-  end
-  def self.generate_food(num)
-    num.times{ @food.add([rand(World.x_boarder),rand(World.y_boarder)])}
   end
   def self.new_day
     @predators.each{_1.reset}
@@ -36,7 +32,6 @@ class World
   @tics_in_day = 600
   @predators = Set[]
   @preys = Set[]
-  @food = Set[]
   @velocity_pred = (2..4)
   @velocity_prey = (1..6)
   @mass_pred = (3..5)
@@ -147,8 +142,6 @@ end
 
 start_preys = 50
 start_predators = 10
-start_food = 100
-World.generate_food start_food
 start_preys.times{Prey.new}
 start_predators.times{Predator.new}
 stat = [[start_preys,start_predators]]
