@@ -5,12 +5,25 @@ GEM
     backport (1.1.2)
     benchmark (0.1.0)
     e2mmap (0.1.0)
-    enumerable-statistics (2.0.1)
     jaro_winkler (1.5.4)
     maruku (0.7.3)
     mini_portile2 (2.4.0)
     nokogiri (1.10.9)
       mini_portile2 (~> 2.4.0)
+    numo (0.1.1)
+      numo-fftw (~> 0.1.1)
+      numo-gnuplot (~> 0.2.4)
+      numo-gsl (~> 0.1.1)
+      numo-linalg (~> 0.1.0)
+      numo-narray (~> 0.9.1)
+    numo-fftw (0.1.1)
+      numo-narray (~> 0.9.0)
+    numo-gnuplot (0.2.4)
+    numo-gsl (0.1.2)
+      numo-narray (>= 0.9.0.8)
+    numo-linalg (0.1.5)
+      numo-narray (>= 0.9.1.4)
+    numo-narray (0.9.1.6)
     parallel (1.19.1)
     parser (2.7.1.0)
       ast (~> 2.4.0)
@@ -26,6 +39,7 @@ GEM
       rexml
       ruby-progressbar (~> 1.7)
       unicode-display_width (>= 1.4.0, < 2.0)
+    ruby-gr (0.0.15)
     ruby-progressbar (1.10.1)
     solargraph (0.38.6)
       backport (~> 1.1)
@@ -44,16 +58,15 @@ GEM
     thor (1.0.1)
     tilt (2.0.10)
     unicode-display_width (1.7.0)
-    unicode_plot (0.0.4)
-      enumerable-statistics (>= 2.0.1)
     yard (0.9.24)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
+  numo
+  ruby-gr
   solargraph
-  unicode_plot
 
 BUNDLED WITH
    2.1.2
